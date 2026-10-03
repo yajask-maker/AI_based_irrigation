@@ -28,6 +28,7 @@ py -m unittest -v
 2. Click **Moderate soil**, then generate again. It suggests irrigation tomorrow.
 3. Click **Rain expected**, then generate again. It schedules no irrigation and gives a review date.
 4. Enter a soil moisture value of `120` and generate again to demonstrate input validation.
+5. Restore a valid sample and click **View decision tree**. Gold boxes and lines trace that plot's inputs through the trained model. Try a different sample and open the tree again to show a different route.
 
 You can also change the numbers directly. The plot name identifies the demo plot; the model uses soil moisture, temperature, and forecast rain for the urgency class. The crop stage affects the illustrative duration.
 
@@ -41,6 +42,12 @@ You can also change the numbers directly. The plot name identifies the demo plot
 
 The sample examples were labelled for software demonstration. Agreement with those examples is **not** evidence of real-world prediction accuracy or safe irrigation guidance. A deployed system would need field data, agronomist-approved targets, independent validation, current forecasts, and local irrigation constraints.
 
+## Visual decision tree
+
+The diagram below shows the tree trained from the current sample CSV. Each blue box asks a yes/no question; colored end boxes show the predicted urgency. The app highlights the route for the plot currently entered.
+
+![Trained irrigation decision tree](decision_tree.svg)
+
 ## Files
 
 | File | Purpose |
@@ -48,5 +55,6 @@ The sample examples were labelled for software demonstration. Agreement with tho
 | `app.py` | Model, recommendation logic, GUI, and terminal demo |
 | `training_examples.csv` | Illustrative labelled scenarios |
 | `test_app.py` | Checks three scenarios and invalid inputs |
+| `decision_tree.svg` | Full diagram of the trained tree |
 | `CA_REPORT.md` | Aim, methodology, algorithm, and observed results |
 | `requirements.txt` | Python dependency |

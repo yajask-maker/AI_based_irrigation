@@ -19,6 +19,7 @@ The system accepts the latest soil moisture, temperature, forecast rain, and cro
 3. Build the application using three small classes: `PlotConditions` validates input, `IrrigationAdvisor` generates a recommendation, and `IrrigationApp` displays the Tkinter interface.
 4. Translate the predicted urgency into a date. Use a small, explicit table of illustrative durations for Early, Mid, and Late growth stages.
 5. Test the three demonstration scenarios and invalid inputs. Display the comparisons followed by the decision tree so the result can be explained during the live demo.
+6. Open the visual decision tree from the GUI. The highlighted boxes and lines show the exact route for the current inputs.
 
 ## Algorithm
 
@@ -39,7 +40,13 @@ The terminal demonstration was run on **3 October 2026**. It produced the follow
 | Moderate soil | 50% | 28 °C | 4 mm | Early | Soon | 4 Oct 2026 | 15 min |
 | Rain expected | 30% | 32 °C | 12 mm | Mid | Wait | No irrigation; review 5 Oct 2026 | 0 min |
 
-Five automated checks passed: the three scenarios above and rejection of invalid soil moisture and growth stage. The program also rejects out-of-range temperature or rain. The live GUI offers the same preset inputs and allows manual changes.
+Six automated checks passed: the three scenarios above, rejection of invalid soil moisture and growth stage, and completeness of the tree diagram layout. The program also rejects out-of-range temperature or rain. The live GUI offers the same preset inputs and allows manual changes.
+
+### Visual result
+
+The following diagram shows the full tree trained on the illustrative examples. The **View decision tree** button highlights the branch for whichever plot conditions are currently entered. For dry soil (25% moisture, 0 mm expected rain), the route ends at **Now**. For 12 mm expected rain, the route ends at **Wait**.
+
+![Trained decision tree](decision_tree.svg)
 
 ## Conclusion and limitation
 

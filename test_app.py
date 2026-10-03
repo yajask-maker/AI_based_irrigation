@@ -1,7 +1,7 @@
 import unittest
 from datetime import date
 
-from app import IrrigationAdvisor, PlotConditions
+from app import IrrigationAdvisor, PlotConditions, tree_layout
 
 
 class IrrigationAdvisorTests(unittest.TestCase):
@@ -40,6 +40,13 @@ class IrrigationAdvisorTests(unittest.TestCase):
     def test_invalid_stage_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "growth stage"):
             PlotConditions("Plot A", 40, 30, 0, "Unknown")
+
+    def test_tree_diagram_includes_every_node(self):
+        positions, width, height = tree_layout(self.advisor.model)
+        self.assertEqual(len(positions), self.advisor.model.tree_.node_count)
+        self.assertGreater(width, 0)
+        self.assertGreater(height, 0)
+        self.assertIn(0, positions)
 
 
 if __name__ == "__main__":

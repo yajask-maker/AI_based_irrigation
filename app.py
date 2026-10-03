@@ -99,6 +99,119 @@ class IrrigationAdvisor:
         return "; ".join(steps)
 
 
+def tree_layout(model):
+    tree = model.tree_
+    positions = {}
+    leaf_number = 0
+
+    def place(node, depth):
+        nonlocal leaf_number
+        left = tree.children_left[node]
+        right = tree.children_right[node]
+        if left == right:
+            x = 130 + leaf_number * 220
+            leaf_number += 1
+            first_x = x
+            last_x = x
+        else:
+            first_x, _ = place(left, depth + 1)
+            _, last_x = place(right, depth + 1)
+            x = (first_x + last_x) / 2
+        positions[node] = (x, 90 + depth * 145)
+        return first_x, last_x
+
+    place(0, 0)
+    return positions, 260 + (leaf_number - 1) * 220, 190 + model.get_depth() * 145
+
+
+class DecisionTreeView:
+    def __init__(self, root, advisor, conditions, recommendation):
+        self.window = tk.Toplevel(root)
+        self.window.title("How the decision tree made its recommendation")
+        width = min(1100, root.winfo_screenwidth() - 80)
+        height = min(700, root.winfo_screenheight() - 100)
+        self.window.geometry(f"{width}x{height}")
+
+        top = ttk.Frame(self.window, padding=14)
+        top.pack(fill="x")
+        ttk.Label(
+            top,
+            text=f"{conditions.plot}: {recommendation.urgency.upper()}",
+            style="Result.TLabel",
+        ).pack(anchor="w")
+        ttk.Label(
+            top,
+            text="Gold boxes and lines show the route taken by these inputs. Scroll to see the full tree.",
+        ).pack(anchor="w", pady=(4, 0))
+
+        holder = ttk.Frame(self.window)
+        holder.pack(fill="both", expand=True, padx=12, pady=(0, 12))
+        canvas = tk.Canvas(holder, bg="#f7fafc", highlightthickness=0)
+        x_scroll = ttk.Scrollbar(holder, orient="horizontal", command=canvas.xview)
+        y_scroll = ttk.Scrollbar(holder, orient="vertical", command=canvas.yview)
+        canvas.configure(xscrollcommand=x_scroll.set, yscrollcommand=y_scroll.set)
+        holder.grid_columnconfigure(0, weight=1)
+        holder.grid_rowconfigure(0, weight=1)
+        canvas.grid(row=0, column=0, sticky="nsew")
+        y_scroll.grid(row=0, column=1, sticky="ns")
+        x_scroll.grid(row=1, column=0, sticky="ew")
+
+        model = advisor.model
+        tree = model.tree_
+        positions, diagram_width, diagram_height = tree_layout(model)
+        canvas.configure(scrollregion=(0, 0, diagram_width, diagram_height))
+        values = [conditions.moisture, conditions.temperature, conditions.rain]
+        path = set(model.decision_path([values]).indices)
+
+        for node, (x, y) in positions.items():
+            for child, answer in [
+                (tree.children_left[node], "Yes"),
+                (tree.children_right[node], "No"),
+            ]:
+                if child < 0:
+                    continue
+                child_x, child_y = positions[child]
+                active = node in path and child in path
+                color = "#d89000" if active else "#94a3b8"
+                canvas.create_line(
+                    x, y + 34, child_x, child_y - 34,
+                    fill=color, width=3 if active else 2, arrow=tk.LAST,
+                )
+                label_x = x + (child_x - x) * 0.28
+                label_y = y + (child_y - y) * 0.28
+                canvas.create_text(
+                    label_x, label_y, text=answer, fill="#805300" if active else "#475569",
+                    font=("Segoe UI", 9, "bold"),
+                )
+
+        for node, (x, y) in positions.items():
+            is_leaf = tree.children_left[node] < 0
+            selected = node in path
+            border = "#d89000" if selected else "#64748b"
+            if is_leaf:
+                class_index = tree.value[node][0].argmax()
+                label = model.classes_[class_index]
+                fill = {"Now": "#fde8e7", "Soon": "#fff1c7", "Wait": "#dcf4e5"}[label]
+                title = label.upper()
+                detail = f"{tree.n_node_samples[node]} examples"
+            else:
+                feature = tree.feature[node]
+                unit = ["%", " °C", " mm"][feature]
+                fill = "#e6f0ff"
+                title = FEATURES[feature]
+                detail = f"≤ {tree.threshold[node]:g}{unit} ?"
+
+            canvas.create_rectangle(
+                x - 82, y - 34, x + 82, y + 34,
+                fill=fill, outline=border, width=4 if selected else 2,
+            )
+            canvas.create_text(x, y - 10, text=title, font=("Segoe UI", 10, "bold"), fill="#183153")
+            canvas.create_text(x, y + 14, text=detail, font=("Segoe UI", 9), fill="#334155")
+
+        canvas.xview_moveto(0)
+        canvas.yview_moveto(0)
+
+
 class IrrigationApp:
     def __init__(self, root):
         self.root = root
@@ -161,8 +274,11 @@ class IrrigationApp:
                 side="left", padx=3
             )
 
-        ttk.Button(panel, text="Generate recommendation", command=self.generate).pack(
-            anchor="w", pady=(4, 15)
+        actions = ttk.Frame(panel)
+        actions.pack(anchor="w", pady=(4, 15))
+        ttk.Button(actions, text="Generate recommendation", command=self.generate).pack(side="left")
+        ttk.Button(actions, text="View decision tree", command=self.show_tree).pack(
+            side="left", padx=(10, 0)
         )
 
         result = ttk.LabelFrame(panel, text="Recommendation", padding=14)
@@ -186,15 +302,18 @@ class IrrigationApp:
             variable.set(value)
         self.result_text.set("Sample loaded. Click Generate recommendation.")
 
+    def read_conditions(self):
+        return PlotConditions(
+            self.plot.get(),
+            float(self.moisture.get()),
+            float(self.temperature.get()),
+            float(self.rain.get()),
+            self.stage.get(),
+        )
+
     def generate(self):
         try:
-            conditions = PlotConditions(
-                self.plot.get(),
-                float(self.moisture.get()),
-                float(self.temperature.get()),
-                float(self.rain.get()),
-                self.stage.get(),
-            )
+            conditions = self.read_conditions()
             recommendation = self.advisor.recommend(conditions)
         except ValueError as error:
             messagebox.showerror("Invalid input", str(error))
@@ -215,6 +334,15 @@ class IrrigationApp:
             f"{conditions.plot}: {recommendation.urgency.upper()}\n"
             f"{timing}\n\nDecision tree path: {recommendation.reason}"
         )
+
+    def show_tree(self):
+        try:
+            conditions = self.read_conditions()
+            recommendation = self.advisor.recommend(conditions)
+        except ValueError as error:
+            messagebox.showerror("Invalid input", str(error))
+            return
+        DecisionTreeView(self.root, self.advisor, conditions, recommendation)
 
 
 def print_demo():
