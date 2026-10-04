@@ -1,7 +1,7 @@
 import unittest
 from datetime import date
 
-from app import IrrigationAdvisor, PlotConditions, tree_layout
+from app import IrrigationAdvisor, PlotConditions, SAMPLE_PLOTS, alert_status, dashboard_status, tree_layout
 
 
 class IrrigationAdvisorTests(unittest.TestCase):
@@ -47,6 +47,17 @@ class IrrigationAdvisorTests(unittest.TestCase):
         self.assertGreater(width, 0)
         self.assertGreater(height, 0)
         self.assertIn(0, positions)
+
+    def test_dashboard_has_distinct_status_and_alerts(self):
+        rows = dashboard_status(self.advisor, SAMPLE_PLOTS, self.day)
+        self.assertEqual([r.urgency for _, r, _ in rows], ["Now", "Soon", "Wait"])
+        self.assertEqual([alert for _, _, alert in rows], ["Due today", "Due tomorrow", "No alert"])
+
+    def test_changed_plot_updates_dashboard_prediction(self):
+        changed = PlotConditions("Plot B", 80, 28, 12, "Early")
+        rows = dashboard_status(self.advisor, [SAMPLE_PLOTS[0], changed], self.day)
+        self.assertEqual(rows[1][1].urgency, "Wait")
+        self.assertEqual(alert_status(rows[1][1], self.day), "No alert")
 
 
 if __name__ == "__main__":

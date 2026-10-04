@@ -48,6 +48,13 @@ class Recommendation:
     reason: str
 
 
+SAMPLE_PLOTS = [
+    PlotConditions("Plot A", 25, 34, 0, "Mid"),
+    PlotConditions("Plot B", 50, 28, 4, "Early"),
+    PlotConditions("Plot C", 30, 32, 12, "Mid"),
+]
+
+
 class IrrigationAdvisor:
     def __init__(self, data_file=DATA_FILE):
         inputs = []
@@ -99,6 +106,29 @@ class IrrigationAdvisor:
         return "; ".join(steps)
 
 
+def alert_status(recommendation, on_date=None):
+    day = on_date if on_date is not None else date.today()
+    if recommendation.irrigation_date is None:
+        return "No alert"
+    days_until = (recommendation.irrigation_date - day).days
+    if days_until < 0:
+        return "Overdue"
+    if days_until == 0:
+        return "Due today"
+    if days_until == 1:
+        return "Due tomorrow"
+    return "No alert"
+
+
+def dashboard_status(advisor, plots, on_date=None):
+    day = on_date if on_date is not None else date.today()
+    rows = []
+    for plot in plots:
+        recommendation = advisor.recommend(plot, day)
+        rows.append((plot, recommendation, alert_status(recommendation, day)))
+    return rows
+
+
 def tree_layout(model):
     tree = model.tree_
     positions = {}
@@ -141,7 +171,7 @@ class DecisionTreeView:
         ).pack(anchor="w")
         ttk.Label(
             top,
-            text="Gold boxes and lines show the route taken by these inputs. Scroll to see the full tree.",
+            text="Blue = question | Pink = now | Yellow = soon | Green = wait | Gold = this plot's path. Scroll to see the full tree.",
         ).pack(anchor="w", pady=(4, 0))
 
         holder = ttk.Frame(self.window)
@@ -216,9 +246,10 @@ class IrrigationApp:
     def __init__(self, root):
         self.root = root
         self.advisor = IrrigationAdvisor()
+        self.plot_data = {plot.plot: plot for plot in SAMPLE_PLOTS}
         root.title("Sugarcane Irrigation Advisor - CA Prototype")
-        root.geometry("800x680")
-        root.minsize(700, 610)
+        root.geometry("900x710")
+        root.minsize(800, 650)
 
         style = ttk.Style()
         if "clam" in style.theme_names():
@@ -228,8 +259,12 @@ class IrrigationApp:
         style.configure("Result.TLabel", font=("Segoe UI", 12, "bold"))
         style.configure("TButton", padding=7)
 
-        panel = ttk.Frame(root, padding=22)
-        panel.pack(fill="both", expand=True)
+        self.notebook = ttk.Notebook(root)
+        self.notebook.pack(fill="both", expand=True)
+        panel = ttk.Frame(self.notebook, padding=22)
+        self.notebook.add(panel, text="Recommendation")
+        dashboard = ttk.Frame(self.notebook, padding=22)
+        self.notebook.add(dashboard, text="Plot dashboard")
         ttk.Label(panel, text="Sugarcane Irrigation Advisor", style="Heading.TLabel").pack(anchor="w")
         ttk.Label(
             panel,
@@ -241,11 +276,11 @@ class IrrigationApp:
         form.pack(fill="x")
         form.columnconfigure(1, weight=1)
 
-        self.plot = tk.StringVar(value="Plot A")
-        self.moisture = tk.StringVar(value="25")
-        self.temperature = tk.StringVar(value="34")
-        self.rain = tk.StringVar(value="0")
-        self.stage = tk.StringVar(value="Mid")
+        self.plot = tk.StringVar(value=SAMPLE_PLOTS[0].plot)
+        self.moisture = tk.StringVar(value=str(SAMPLE_PLOTS[0].moisture))
+        self.temperature = tk.StringVar(value=str(SAMPLE_PLOTS[0].temperature))
+        self.rain = tk.StringVar(value=str(SAMPLE_PLOTS[0].rain))
+        self.stage = tk.StringVar(value=SAMPLE_PLOTS[0].stage)
 
         fields = [
             ("Plot", self.plot, ["Plot A", "Plot B", "Plot C"]),
@@ -261,16 +296,14 @@ class IrrigationApp:
             else:
                 control = ttk.Entry(form, textvariable=variable)
             control.grid(row=index, column=1, sticky="ew", pady=7)
+            if label == "Plot":
+                control.bind("<<ComboboxSelected>>", self.select_plot)
 
         scenarios = ttk.Frame(panel)
         scenarios.pack(fill="x", pady=(14, 8))
         ttk.Label(scenarios, text="Try a sample:").pack(side="left", padx=(0, 10))
-        for label, values in [
-            ("Dry soil", ("Plot A", "25", "34", "0", "Mid")),
-            ("Moderate soil", ("Plot B", "50", "28", "4", "Early")),
-            ("Rain expected", ("Plot C", "30", "32", "12", "Mid")),
-        ]:
-            ttk.Button(scenarios, text=label, command=lambda v=values: self.load_sample(v)).pack(
+        for label, plot in zip(["Dry soil", "Moderate soil", "Rain expected"], SAMPLE_PLOTS):
+            ttk.Button(scenarios, text=label, command=lambda p=plot: self.load_plot(p)).pack(
                 side="left", padx=3
             )
 
@@ -285,22 +318,116 @@ class IrrigationApp:
         result.pack(fill="both", expand=True)
         self.result_text = tk.StringVar(value="Enter conditions and click Generate recommendation.")
         ttk.Label(
-            result, textvariable=self.result_text, style="Result.TLabel", wraplength=700, justify="left"
+            result, textvariable=self.result_text, style="Result.TLabel", wraplength=790, justify="left"
         ).pack(anchor="w")
+        self.current_alert = tk.StringVar(value="Local app alert will appear here when irrigation is due.")
+        ttk.Label(result, textvariable=self.current_alert, wraplength=790).pack(anchor="w", pady=(14, 0))
 
         ttk.Label(
             panel,
             text="Demo only: sample labels and durations are assumptions, not field-validated advice.",
             style="Sub.TLabel",
-            wraplength=740,
+            wraplength=830,
         ).pack(anchor="w", pady=(12, 0))
 
-    def load_sample(self, values):
-        for variable, value in zip(
-            [self.plot, self.moisture, self.temperature, self.rain, self.stage], values
-        ):
-            variable.set(value)
-        self.result_text.set("Sample loaded. Click Generate recommendation.")
+        ttk.Label(dashboard, text="Plot dashboard", style="Heading.TLabel").pack(anchor="w")
+        ttk.Label(
+            dashboard,
+            text="Simulated plot readings and recommendations. Results update after Generate recommendation.",
+            style="Sub.TLabel",
+        ).pack(anchor="w", pady=(4, 18))
+        ttk.Label(
+            dashboard,
+            text=f"Decision tree trained on {self.advisor.example_count} illustrative scenarios | 3 outcomes",
+            style="Sub.TLabel",
+        ).pack(anchor="w", pady=(0, 14))
+
+        cards = ttk.Frame(dashboard)
+        cards.pack(fill="x", pady=(0, 18))
+        self.counts = {name: tk.StringVar(value="0") for name in ["Now", "Soon", "Wait"]}
+        for name, color in [("Now", "#fde8e7"), ("Soon", "#fff1c7"), ("Wait", "#dcf4e5")]:
+            card = tk.Frame(cards, bg=color, padx=18, pady=12)
+            card.pack(side="left", fill="x", expand=True, padx=(0, 10))
+            tk.Label(card, textvariable=self.counts[name], bg=color, font=("Segoe UI", 20, "bold")).pack()
+            tk.Label(card, text=name.upper(), bg=color, font=("Segoe UI", 9, "bold")).pack()
+
+        self.dashboard_alert = tk.StringVar()
+        alert_box = ttk.LabelFrame(dashboard, text="Local irrigation alerts", padding=12)
+        alert_box.pack(fill="x")
+        ttk.Label(alert_box, textvariable=self.dashboard_alert, wraplength=790, justify="left").pack(anchor="w")
+
+        columns = ("plot", "moisture", "rain", "urgency", "date", "minutes", "alert")
+        self.table = ttk.Treeview(dashboard, columns=columns, show="headings", height=5)
+        headings = {
+            "plot": ("Plot", 100), "moisture": ("Moisture", 100), "rain": ("Rain", 90),
+            "urgency": ("Urgency", 95), "date": ("Irrigation date", 140),
+            "minutes": ("Duration", 90), "alert": ("Alert", 130),
+        }
+        for column, (title, width) in headings.items():
+            self.table.heading(column, text=title)
+            self.table.column(column, width=width, anchor="center")
+        self.table.tag_configure("Now", background="#fff0ed")
+        self.table.tag_configure("Soon", background="#fff7dd")
+        self.table.tag_configure("Wait", background="#e9f7ef")
+        self.table.pack(fill="x", pady=(18, 10))
+        self.table.bind("<Double-1>", self.load_selected_plot)
+        ttk.Button(dashboard, text="Load selected plot into recommendation", command=self.load_selected_plot).pack(
+            anchor="w"
+        )
+        ttk.Label(
+            dashboard,
+            text="Alerts appear inside this demo only. No SMS or external notification is sent.",
+            style="Sub.TLabel",
+        ).pack(anchor="w", pady=(18, 0))
+        self.update_dashboard()
+
+    def load_plot(self, plot):
+        self.plot.set(plot.plot)
+        self.moisture.set(str(plot.moisture))
+        self.temperature.set(str(plot.temperature))
+        self.rain.set(str(plot.rain))
+        self.stage.set(plot.stage)
+        self.result_text.set(f"{plot.plot} loaded. Click Generate recommendation.")
+        self.current_alert.set("Local app alert will appear here when irrigation is due.")
+
+    def select_plot(self, _event=None):
+        self.load_plot(self.plot_data[self.plot.get()])
+
+    def load_selected_plot(self, _event=None):
+        selection = self.table.selection()
+        if not selection:
+            messagebox.showinfo("Select a plot", "Choose a row in the dashboard first.")
+            return
+        name = self.table.item(selection[0], "values")[0]
+        self.load_plot(self.plot_data[name])
+        self.notebook.select(0)
+
+    def update_dashboard(self):
+        rows = dashboard_status(self.advisor, list(self.plot_data.values()))
+        counts = {"Now": 0, "Soon": 0, "Wait": 0}
+        alerts = []
+        for item in self.table.get_children():
+            self.table.delete(item)
+
+        for plot, recommendation, alert in rows:
+            counts[recommendation.urgency] += 1
+            if alert != "No alert":
+                alerts.append(f"{plot.plot}: {alert.lower()} ({recommendation.duration_minutes} min)")
+            date_text = (
+                recommendation.irrigation_date.strftime("%d %b %Y")
+                if recommendation.irrigation_date else "Not scheduled"
+            )
+            self.table.insert(
+                "", "end", values=(
+                    plot.plot, f"{plot.moisture:g}%", f"{plot.rain:g} mm",
+                    recommendation.urgency.upper(), date_text,
+                    f"{recommendation.duration_minutes} min", alert,
+                ), tags=(recommendation.urgency,),
+            )
+
+        for name in counts:
+            self.counts[name].set(str(counts[name]))
+        self.dashboard_alert.set("   |   ".join(alerts) if alerts else "No plots are due today or tomorrow.")
 
     def read_conditions(self):
         return PlotConditions(
@@ -318,6 +445,14 @@ class IrrigationApp:
         except ValueError as error:
             messagebox.showerror("Invalid input", str(error))
             return
+
+        self.plot_data[conditions.plot] = conditions
+        self.update_dashboard()
+        alert = alert_status(recommendation)
+        self.current_alert.set(
+            f"Local app alert: {conditions.plot} is {alert.lower()}."
+            if alert != "No alert" else "No irrigation alert for this plot."
+        )
 
         if recommendation.urgency == "Wait":
             timing = (

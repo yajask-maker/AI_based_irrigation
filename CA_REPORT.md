@@ -18,8 +18,9 @@ The system accepts the latest soil moisture, temperature, forecast rain, and cro
 2. Train a depth-limited decision tree classifier on those examples when the program starts. The examples are classroom scenarios based on stated assumptions, not observations from a farm.
 3. Build the application using three small classes: `PlotConditions` validates input, `IrrigationAdvisor` generates a recommendation, and `IrrigationApp` displays the Tkinter interface.
 4. Translate the predicted urgency into a date. Use a small, explicit table of illustrative durations for Early, Mid, and Late growth stages.
-5. Test the three demonstration scenarios and invalid inputs. Display the comparisons followed by the decision tree so the result can be explained during the live demo.
-6. Open the visual decision tree from the GUI. The highlighted boxes and lines show the exact route for the current inputs.
+5. Display the plot status and local in-app alerts on a dashboard. Generate a new recommendation to update that plot's dashboard row.
+6. Test the three demonstration scenarios and invalid inputs. Display the comparisons followed by the decision tree so the result can be explained during the live demo.
+7. Open the visual decision tree from the GUI. The highlighted boxes and lines show the exact route for the current inputs.
 
 ## Algorithm
 
@@ -29,18 +30,21 @@ The system accepts the latest soil moisture, temperature, forecast rain, and cro
 4. Pass moisture, temperature, and rain to the trained tree. It predicts **Now**, **Soon**, or **Wait**.
 5. If the result is **Now**, suggest today. If it is **Soon**, suggest tomorrow. If it is **Wait**, schedule no irrigation and suggest reviewing conditions in two days.
 6. For **Now** or **Soon**, look up an illustrative duration using the urgency and growth stage. Display the prediction, date, duration, and tree path.
+7. Refresh the dashboard with the updated plot result and show a local alert when the date is today or tomorrow.
 
 ## Result
 
-The terminal demonstration was run on **3 October 2026**. It produced the following results:
+The terminal demonstration was run on **4 October 2026**. It produced the following results:
 
 | Scenario | Moisture | Temperature | Forecast rain | Stage | Predicted urgency | Suggested date | Duration |
 | --- | ---: | ---: | ---: | --- | --- | --- | ---: |
-| Dry soil | 25% | 34 °C | 0 mm | Mid | Now | 3 Oct 2026 | 40 min |
-| Moderate soil | 50% | 28 °C | 4 mm | Early | Soon | 4 Oct 2026 | 15 min |
-| Rain expected | 30% | 32 °C | 12 mm | Mid | Wait | No irrigation; review 5 Oct 2026 | 0 min |
+| Dry soil | 25% | 34 °C | 0 mm | Mid | Now | 4 Oct 2026 | 40 min |
+| Moderate soil | 50% | 28 °C | 4 mm | Early | Soon | 5 Oct 2026 | 15 min |
+| Rain expected | 30% | 32 °C | 12 mm | Mid | Wait | No irrigation; review 6 Oct 2026 | 0 min |
 
-Six automated checks passed: the three scenarios above, rejection of invalid soil moisture and growth stage, and completeness of the tree diagram layout. The program also rejects out-of-range temperature or rain. The live GUI offers the same preset inputs and allows manual changes.
+Eight automated checks passed: the three scenarios above, rejection of invalid soil moisture and growth stage, completeness of the tree diagram layout, the dashboard statuses and alerts, and a changed plot's updated prediction. The program also rejects out-of-range temperature or rain. The live GUI offers the same preset inputs and allows manual changes.
+
+The dashboard displays **Due today** for Plot A, **Due tomorrow** for Plot B, and **No alert** for Plot C. These are local in-app alerts based on the recommendation date. The dashboard supports the selected recommendation requirement; it does not send SMS or retrieve live sensor readings.
 
 ### Visual result
 
@@ -50,4 +54,4 @@ The following diagram shows the full tree trained on the illustrative examples. 
 
 ## Conclusion and limitation
 
-The prototype demonstrates the selected functional requirement from input to visible recommendation. The decision tree is easy to inspect, and the output changes when the plot conditions change. Since training labels and durations are illustrative, the result is suitable for demonstrating the software workflow only. It has not been validated for real irrigation decisions.
+The prototype demonstrates the selected recommendation requirement from input to visible recommendation. The decision tree is easy to inspect, and the dashboard makes the changes and alerts visible. Since training labels and durations are illustrative, the result is suitable for demonstrating the software workflow only. It has not been validated for real irrigation decisions.
