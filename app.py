@@ -51,7 +51,7 @@ class Recommendation:
 SAMPLE_PLOTS = [
     PlotConditions("Plot A", 25, 34, 0, "Mid"),
     PlotConditions("Plot B", 50, 28, 4, "Early"),
-    PlotConditions("Plot C", 30, 32, 12, "Mid"),
+    PlotConditions("Plot C", 25, 34, 12, "Mid"),
 ]
 
 
@@ -485,7 +485,7 @@ def print_demo():
     scenarios = [
         PlotConditions("Dry soil", 25, 34, 0, "Mid"),
         PlotConditions("Moderate soil", 50, 28, 4, "Early"),
-        PlotConditions("Rain expected", 30, 32, 12, "Mid"),
+        PlotConditions("Rain expected", 25, 34, 12, "Mid"),
     ]
     print(f"Model trained on {advisor.example_count} illustrative examples.")
     for conditions in scenarios:

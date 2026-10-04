@@ -11,7 +11,7 @@
 | 0:00–0:25 | Open **Plot dashboard**. | "These are three simulated plots. The dashboard shows distinct outcomes and which plots are due today or tomorrow." |
 | 0:25–1:05 | Open **Recommendation**; choose **Dry soil**; click **Generate recommendation**. | "For 25% moisture and no expected rain, the model predicts Now. The app converts that into today's date and an illustrative 40-minute duration for the Mid stage. A local alert appears." |
 | 1:05–1:45 | Click **View decision tree**. Follow the gold path from the root to **Now**. | "The tree asks simple threshold questions. For this input, moisture is at most 55%, rain is at most 8 and then 2 mm, and moisture is at most 35%. That path ends at Now." |
-| 1:45–2:25 | Close the tree; choose **Rain expected**; generate and view the tree again. | "Despite dry soil, 12 mm of forecast rain takes a different branch to Wait, so irrigation is not scheduled. The app asks us to review conditions in two days." |
+| 1:45–2:25 | Close the tree; choose **Rain expected**; generate and view the tree again. | "Moisture and temperature are unchanged. Only the rain forecast changed from 0 to 12 mm. That sends the tree down a different branch to Wait, so irrigation is not scheduled." |
 | 2:25–2:50 | Return to **Plot dashboard**. | "The dashboard displays the current outcomes and only local alerts for plots due today or tomorrow. It is a presentation of the recommendation result, not a separate AI model." |
 | 2:50–3:00 | Point to the demo note. | "The 42 training scenarios and durations are illustrative. Real deployment would require measured farm data and agronomic validation." |
 

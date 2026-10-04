@@ -26,7 +26,7 @@ class IrrigationAdvisorTests(unittest.TestCase):
         self.assertEqual(result.duration_minutes, 15)
 
     def test_forecast_rain_prevents_irrigation(self):
-        conditions = PlotConditions("Plot C", 30, 32, 12, "Mid")
+        conditions = PlotConditions("Plot C", 25, 34, 12, "Mid")
         result = self.advisor.recommend(conditions, self.day)
         self.assertEqual(result.urgency, "Wait")
         self.assertIsNone(result.irrigation_date)

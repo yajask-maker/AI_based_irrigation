@@ -27,7 +27,7 @@ py -m unittest -v
 1. Open **Plot dashboard**. The three sample plots show Now, Soon, and Wait, plus local alerts for plots due today or tomorrow.
 2. Return to **Recommendation**, click **Dry soil**, then **Generate recommendation**. The model suggests irrigation today and shows a local app alert.
 3. Click **View decision tree**. Gold boxes and lines trace the current inputs to the Now leaf.
-4. Click **Rain expected**, generate again, and view its different path to Wait. The dashboard updates when you generate a recommendation.
+4. Click **Rain expected**, generate again, and view its different path to Wait. Moisture and temperature match Dry soil; only the rain forecast differs. The dashboard updates when you generate a recommendation.
 5. If time permits, enter soil moisture `120` to show input validation.
 
 You can also change the numbers directly. The plot name identifies the demo plot; the model uses soil moisture, temperature, and forecast rain for the urgency class. The crop stage affects the illustrative duration.

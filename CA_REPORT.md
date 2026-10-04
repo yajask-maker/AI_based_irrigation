@@ -40,7 +40,7 @@ The terminal demonstration was run on **4 October 2026**. It produced the follow
 | --- | ---: | ---: | ---: | --- | --- | --- | ---: |
 | Dry soil | 25% | 34 °C | 0 mm | Mid | Now | 4 Oct 2026 | 40 min |
 | Moderate soil | 50% | 28 °C | 4 mm | Early | Soon | 5 Oct 2026 | 15 min |
-| Rain expected | 30% | 32 °C | 12 mm | Mid | Wait | No irrigation; review 6 Oct 2026 | 0 min |
+| Rain expected | 25% | 34 °C | 12 mm | Mid | Wait | No irrigation; review 6 Oct 2026 | 0 min |
 
 Eight automated checks passed: the three scenarios above, rejection of invalid soil moisture and growth stage, completeness of the tree diagram layout, the dashboard statuses and alerts, and a changed plot's updated prediction. The program also rejects out-of-range temperature or rain. The live GUI offers the same preset inputs and allows manual changes.
 
@@ -48,7 +48,7 @@ The dashboard displays **Due today** for Plot A, **Due tomorrow** for Plot B, an
 
 ### Visual result
 
-The following diagram shows the full tree trained on the illustrative examples. The **View decision tree** button highlights the branch for whichever plot conditions are currently entered. For dry soil (25% moisture, 0 mm expected rain), the route ends at **Now**. For 12 mm expected rain, the route ends at **Wait**.
+The following diagram shows the full tree trained on the illustrative examples. The **View decision tree** button highlights the branch for whichever plot conditions are currently entered. With moisture fixed at 25% and temperature fixed at 34 °C, changing forecast rain from 0 mm to 12 mm changes the route from **Now** to **Wait**.
 
 ![Trained decision tree](decision_tree.svg)
 
