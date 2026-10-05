@@ -4,18 +4,18 @@
 
 "For my sugarcane irrigation use case, I implemented the irrigation recommendation requirement: the browser app takes plot and weather conditions, uses a decision tree to classify urgency, and shows a proposed date, duration, and explanation."
 
-## Three-minute live demo
+## Three-minute live demo with values entered in class
 
 | Time | Action in the browser | What to say |
 | --- | --- | --- |
-| 0:00–0:25 | Open **Plot dashboard**. | "These are three simulated plots. The cards show how many need irrigation now, soon, or after a wait; the alerts are local to this page." |
-| 0:25–1:05 | Open **Recommendation** and choose **Dry soil**. | "With 25% moisture and no expected rain, the exported decision tree predicts Now. The app maps that to today's date and an illustrative 40-minute duration for the Mid stage." |
-| 1:05–1:45 | Select **See highlighted decision path**. | "Gold marks the comparisons followed for these inputs. The path ends at the Now leaf. The model predicts urgency; simple application rules add the date and minutes." |
-| 1:45–2:25 | Return to **Recommendation**, choose **Rain expected**, then view the tree again. | "Moisture, temperature, and stage are unchanged. Only forecast rain rises from 0 to 12 mm, so the tree follows a different branch to Wait. No irrigation is scheduled." |
-| 2:25–2:50 | Open **Plot dashboard** again. | "The dashboard presents the same model results and shows local alerts for plots due today or tomorrow. It is a supporting view of the selected requirement." |
-| 2:50–3:00 | Point to the classroom note. | "The 42 training examples and durations are illustrative. Real farm use requires measured data and agronomic validation." |
+| 0:00–0:20 | Open **Recommendation**. Select Plot A and type moisture `25`, temperature `34`, rain `0`, stage **Mid**. | "I can enter readings chosen during this demonstration. The model uses moisture, temperature, and forecast rain; stage sets the illustrative duration." |
+| 0:20–0:55 | Click **Generate recommendation**. | "For these values, the tree predicts Now. The page suggests today, shows 40 minutes, and displays a local alert." |
+| 0:55–1:30 | Select **See highlighted decision path**. | "Gold marks the threshold comparisons for the values I entered and ends at Now. The model predicts urgency; application rules add date and minutes." |
+| 1:30–2:10 | Return to **Recommendation**. Keep all values the same but change rain to `12`; click **Generate recommendation**. | "Only the rain forecast changed. The result switches to Wait, so no irrigation is scheduled. The tree path also changes." |
+| 2:10–2:45 | Open **Plot dashboard**. | "Plot A now shows Wait because I updated its values. The other sample plots keep their own conditions. Alerts are local to this page." |
+| 2:45–3:00 | Point to the classroom note. | "The 42 training examples and durations are illustrative. Real farm use requires measured data and agronomic validation." |
 
-If extra time remains, enter `120` for moisture and generate again to demonstrate validation. Keep the recommendation comparison as the centre of the presentation.
+If extra time remains, enter `120` for moisture and generate again to demonstrate validation. You may choose other valid values on the spot; the same browser model calculates a fresh result. Changing a value shows a reminder until you click Generate. Keep the rain comparison as the centre of the presentation.
 
 ## Explain the architecture simply
 

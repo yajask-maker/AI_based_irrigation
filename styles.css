@@ -54,6 +54,8 @@ h1 { font-size: clamp(30px, 3.6vw, 49px); line-height: 1.1; letter-spacing: -.04
 .muted { color: var(--muted); line-height: 1.55; }
 .input-panel > .muted { font-size: 13px; margin: 14px 0 17px; }
 .sample-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+.sample-label { color: var(--muted); font-size: 13px; font-weight: 700; margin: 0 0 9px; }
+.edit-status { color: #73500e; background: #fff5d9; border: 1px solid #ead28b; border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.4; }
 .sample-btn { border: 1px solid #c9ddd0; color: #285f47; background: #f1f7f0; border-radius: 999px; padding: 8px 12px; font-size: 12px; font-weight: 700; }
 .sample-btn:hover, .sample-btn.active { background: #daf0df; border-color: #6baa80; }
 .field { display: grid; gap: 7px; margin-bottom: 15px; }

@@ -316,6 +316,7 @@ function initApp() {
     try {
       const result = predict(readForm());
       byId("input-error").hidden = true;
+      byId("edit-status").hidden = true;
       state.plots[result.conditions.plot] = result.conditions;
       state.current = result;
       renderResult(result);
@@ -330,6 +331,14 @@ function initApp() {
   }
 
   form.addEventListener("submit", generate);
+  function markValuesChanged() {
+    for (const button of document.querySelectorAll(".sample-btn")) button.classList.remove("active");
+    byId("edit-status").hidden = false;
+  }
+  for (const key of ["moisture", "temperature", "rain"]) {
+    byId(key).addEventListener("input", markValuesChanged);
+  }
+  byId("stage").addEventListener("change", markValuesChanged);
   byId("plot").addEventListener("change", event => {
     loadPlot(event.target.value);
     generate();

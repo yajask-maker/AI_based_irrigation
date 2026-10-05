@@ -44,7 +44,8 @@
       <div class="advisor-layout">
         <div class="panel input-panel">
           <div class="panel-heading"><div><div class="section-label">INPUT</div><h2>Plot conditions</h2></div><span class="step-number">01 / 02</span></div>
-          <p class="muted">Choose a scenario or enter your own values. Sample buttons calculate the result immediately.</p>
+          <p class="muted">Enter your own readings below, then click Generate recommendation. The result, dashboard, and decision tree update from those values.</p>
+          <p class="sample-label">Or try a sample plot:</p>
           <div class="sample-row" aria-label="Sample scenarios">
             <button type="button" class="sample-btn" data-plot="Plot A">Dry soil</button>
             <button type="button" class="sample-btn" data-plot="Plot B">Moderate soil</button>
@@ -58,6 +59,7 @@
               <div class="field"><label for="rain">Rain forecast <span>mm / 24 h</span></label><input id="rain" name="rain" type="number" min="0" max="100" step="any" inputmode="decimal" required><small>Next 24 hours</small></div>
               <div class="field"><label for="stage">Growth stage</label><select id="stage" name="stage"><option>Early</option><option>Mid</option><option>Late</option></select><small>Used for demo duration</small></div>
             </div>
+            <p id="edit-status" class="edit-status" role="status" hidden>Values changed. Generate a recommendation to update the result.</p>
             <p id="input-error" class="input-error" role="alert" hidden></p>
             <button class="primary-btn" type="submit">Generate recommendation <span aria-hidden="true">→</span></button>
           </form>
