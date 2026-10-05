@@ -16,7 +16,7 @@
         <div class="eyebrow">OOSE LAB CA · SUGARCANE USE CASE</div>
         <div class="brand-title">Irrigation Advisor</div>
       </div>
-      <span class="offline-badge">Offline classroom demo</span>
+      <span class="offline-badge">Live weather optional</span>
     </div>
   </header>
 
@@ -30,7 +30,7 @@
       <div class="hero-facts" aria-label="Prototype facts">
         <div><strong>42</strong><span>illustrative examples</span></div>
         <div><strong>3</strong><span>urgency outcomes</span></div>
-        <div><strong>0</strong><span>external services</span></div>
+        <div><strong>1</strong><span>optional weather source</span></div>
       </div>
     </section>
 
@@ -44,7 +44,15 @@
       <div class="advisor-layout">
         <div class="panel input-panel">
           <div class="panel-heading"><div><div class="section-label">INPUT</div><h2>Plot conditions</h2></div><span class="step-number">01 / 02</span></div>
-          <p class="muted">Enter your own readings below, then click Generate recommendation. The result, dashboard, and decision tree update from those values.</p>
+          <p class="muted">Enter a measured soil reading and your own weather values, or fill weather from a live forecast. Generate updates the result, dashboard, and decision tree.</p>
+          <div class="weather-tool">
+            <label for="weather-city">Weather location in India</label>
+            <div class="weather-controls">
+              <input id="weather-city" type="text" value="Kolhapur" autocomplete="address-level2" aria-describedby="weather-status">
+              <button type="button" id="fetch-weather" class="secondary-btn">Use current weather</button>
+            </div>
+            <p id="weather-status" role="status">Fills air temperature and the next 24 hours of forecast rain. Soil moisture remains your own reading.</p>
+          </div>
           <p class="sample-label">Or try a sample plot:</p>
           <div class="sample-row" aria-label="Sample scenarios">
             <button type="button" class="sample-btn" data-plot="Plot A">Dry soil</button>
@@ -54,7 +62,7 @@
           <form id="conditions-form" novalidate>
             <div class="field"><label for="plot">Plot</label><select id="plot" name="plot"><option>Plot A</option><option>Plot B</option><option>Plot C</option></select></div>
             <div class="field-grid">
-              <div class="field"><label for="moisture">Soil moisture <span>%</span></label><input id="moisture" name="moisture" type="number" min="0" max="100" step="any" inputmode="decimal" required><small>0 to 100%</small></div>
+              <div class="field"><label for="moisture">Measured soil moisture <span>%</span></label><input id="moisture" name="moisture" type="number" min="0" max="100" step="any" inputmode="decimal" required><small>Enter a reading for this plot; weather cannot supply it.</small></div>
               <div class="field"><label for="temperature">Temperature <span>°C</span></label><input id="temperature" name="temperature" type="number" min="0" max="55" step="any" inputmode="decimal" required><small>0 to 55 °C</small></div>
               <div class="field"><label for="rain">Rain forecast <span>mm / 24 h</span></label><input id="rain" name="rain" type="number" min="0" max="100" step="any" inputmode="decimal" required><small>Next 24 hours</small></div>
               <div class="field"><label for="stage">Growth stage</label><select id="stage" name="stage"><option>Early</option><option>Mid</option><option>Late</option></select><small>Used for demo duration</small></div>
@@ -75,10 +83,11 @@
           </div>
           <div id="result-alert" class="alert-banner" role="status"></div>
           <div class="path-preview"><span class="section-label">WHY THIS RESULT?</span><p id="result-reason"></p></div>
+          <p id="weather-context" class="weather-context"></p>
           <button type="button" id="open-tree" class="secondary-btn">See highlighted decision path <span aria-hidden="true">↗</span></button>
         </div>
       </div>
-      <p class="demo-note">Classroom prototype: inputs and training labels are illustrative. The output is not field-validated irrigation advice.</p>
+      <p class="demo-note">Live weather is modelled by Open-Meteo, not measured at the plot. The tree's 42 labels and suggested minutes are classroom examples. Check local soil, rainfall, and irrigation equipment before any field use.</p>
     </section>
 
     <section id="dashboard-panel" class="view" aria-label="Plot dashboard" hidden>
@@ -108,6 +117,6 @@
     </section>
   </main>
 
-  <footer class="site-footer"><div class="shell"><span>OOSE lab CA · AI Irrigation Advisory System for Sugarcane Crop</span><span>Educational demonstration · simulated data</span></div></footer>
+  <footer class="site-footer"><div class="shell"><span>OOSE lab CA · AI Irrigation Advisory System for Sugarcane Crop</span><span>Classroom model · weather by <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> · crop factors from <a href="https://www.fao.org/4/X0490E/x0490e0b.htm" target="_blank" rel="noopener noreferrer">FAO</a></span></div></footer>
 </body>
 </html>

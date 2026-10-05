@@ -54,6 +54,14 @@ h1 { font-size: clamp(30px, 3.6vw, 49px); line-height: 1.1; letter-spacing: -.04
 .muted { color: var(--muted); line-height: 1.55; }
 .input-panel > .muted { font-size: 13px; margin: 14px 0 17px; }
 .sample-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+.weather-tool { border: 1px solid var(--line); border-radius: 12px; background: #f8fbf8; padding: 15px; margin: 16px 0 19px; }
+.weather-tool label { display: block; font-size: 13px; font-weight: 750; margin-bottom: 9px; }
+.weather-controls { display: flex; gap: 9px; }
+.weather-controls input { flex: 1; min-width: 0; border: 1px solid #cbd9ce; border-radius: 9px; padding: 9px 11px; background: white; font-size: 14px; }
+.weather-controls button { white-space: nowrap; }
+.weather-tool p { color: var(--muted); font-size: 12px; line-height: 1.45; margin: 10px 0 0; }
+.weather-tool p.weather-error { color: #9e302a; }
+.weather-context { color: #3f594a; background: #f4f8f4; border-radius: 9px; font-size: 12px; line-height: 1.55; padding: 11px 13px; margin: 0 0 18px; }
 .sample-label { color: var(--muted); font-size: 13px; font-weight: 700; margin: 0 0 9px; }
 .edit-status { color: #73500e; background: #fff5d9; border: 1px solid #ead28b; border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.4; }
 .sample-btn { border: 1px solid #c9ddd0; color: #285f47; background: #f1f7f0; border-radius: 999px; padding: 8px 12px; font-size: 12px; font-weight: 700; }
@@ -148,6 +156,7 @@ tbody tr:last-child td { border-bottom: 0; }
 .tree-node.soon .tree-title { fill: #815900; }
 .tree-node.wait .tree-title { fill: #19623f; }
 .site-footer { border-top: 1px solid var(--line); color: #778b7d; font-size: 12px; }
+.site-footer a { color: var(--green-dark); }
 .site-footer .shell { display: flex; justify-content: space-between; gap: 16px; padding-block: 20px; }
 
 @media (max-width: 940px) {
@@ -156,6 +165,7 @@ tbody tr:last-child td { border-bottom: 0; }
   .result-panel .secondary-btn { margin-top: 15px; }
 }
 @media (max-width: 640px) {
+  .weather-controls { flex-direction: column; }
   .shell { width: min(100% - 28px, 1180px); }
   .header-inner { min-height: 69px; }
   .offline-badge { font-size: 10px; padding: 6px 8px; }

@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const { MODEL, SAMPLE_PLOTS, predict, treeLayout } = require("./app.js");
+const { MODEL, SAMPLE_PLOTS, predict, treeLayout, parseWeatherForecast, fetchWeatherForCity } = require("./app.js");
 
 const day = new Date(2026, 9, 5);
 
@@ -57,4 +57,42 @@ test("tree layout contains every model node", () => {
   assert.equal(Object.keys(layout.positions).length, MODEL.nodes.length);
   assert.ok(layout.width > 0 && layout.height > 0);
   assert.equal(predict(SAMPLE_PLOTS["Plot A"], day).path[0], 0);
+});
+
+test("weather forecast uses the next 24 hours and leaves soil moisture for manual entry", () => {
+  const data = {
+    current: { temperature_2m: 29.6, time: "2026-10-05T13:00" },
+    hourly: {
+      precipitation: [99, ...Array(23).fill(0), 12],
+      et0_fao_evapotranspiration: [99, ...Array(24).fill(0.2)]
+    }
+  };
+  const weather = parseWeatherForecast({ name: "Kolhapur", admin1: "Maharashtra" }, data);
+  assert.equal(weather.temperature, 29.6);
+  assert.equal(weather.rain, 12);
+  assert.equal(weather.et0, 4.8);
+  assert.equal(weather.location, "Kolhapur, Maharashtra");
+  assert.equal(weather.moisture, undefined);
+  assert.throws(() => parseWeatherForecast({ name: "Kolhapur" }, { current: { temperature_2m: 28 } }), /incomplete/);
+});
+
+test("live weather lookup requests the chosen town and forecast without an API key", async () => {
+  const requests = [];
+  const fakeFetch = async url => {
+    requests.push(new URL(url));
+    return {
+      ok: true,
+      json: async () => requests.length === 1
+        ? { results: [{ name: "Kolhapur", admin1: "Maharashtra", latitude: 16.7, longitude: 74.2 }] }
+        : { current: { temperature_2m: 29, time: "2026-10-05T13:00" },
+            hourly: { precipitation: Array(25).fill(0), et0_fao_evapotranspiration: Array(25).fill(0.1) } }
+    };
+  };
+  const weather = await fetchWeatherForCity("Kolhapur", fakeFetch);
+  assert.equal(weather.temperature, 29);
+  assert.equal(requests[0].searchParams.get("name"), "Kolhapur");
+  assert.equal(requests[0].searchParams.get("countryCode"), "IN");
+  assert.equal(requests[1].searchParams.get("forecast_hours"), "25");
+  assert.equal(requests[1].searchParams.get("current"), "temperature_2m");
+  assert.equal(requests[1].searchParams.has("apikey"), false);
 });
