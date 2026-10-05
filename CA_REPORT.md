@@ -1,57 +1,44 @@
 # OOSE Lab CA Report
 
-## Title
-
-Live demonstration of the AI Based Irrigation Recommendation functional requirement for the AI Irrigation Advisory System for Sugarcane Crop.
+**Project:** AI Irrigation Advisory System for Sugarcane Crop  
+**Selected functional requirement:** AI-Based Irrigation Recommendation  
+**Student:** Yajas Kothari · Roll No. 16014224051 · Batch A2
 
 ## Aim
 
-To implement and demonstrate a prototype that accepts plot conditions and produces an irrigation recommendation with a suggested date and duration.
-
-## Functional requirement selected
-
-The system accepts the latest soil moisture, temperature, forecast rain, and crop growth stage for a selected plot, then presents a plot-specific irrigation recommendation. This prototype demonstrates that input-to-recommendation flow with simulated values. It does not implement live sensor ingestion, external weather APIs, or automatic re-generation when a remote data source changes.
+To implement and demonstrate a browser-based prototype that accepts plot conditions and displays a plot-specific irrigation recommendation, including urgency, a proposed date, and an illustrative duration.
 
 ## Methodology
 
-1. Prepare 42 labelled illustrative examples in `training_examples.csv`. Inputs are soil moisture percentage, temperature in degrees Celsius, and rainfall forecast for the next 24 hours in millimetres. Labels are **Now**, **Soon**, and **Wait**.
-2. Train a depth-limited decision tree classifier on those examples when the program starts. The examples are classroom scenarios based on stated assumptions, not observations from a farm.
-3. Build the application using three small classes: `PlotConditions` validates input, `IrrigationAdvisor` generates a recommendation, and `IrrigationApp` displays the Tkinter interface.
-4. Translate the predicted urgency into a date. Use a small, explicit table of illustrative durations for Early, Mid, and Late growth stages.
-5. Display the plot status and local in-app alerts on a dashboard. Generate a new recommendation to update that plot's dashboard row.
-6. Test the three demonstration scenarios and invalid inputs. Display the comparisons followed by the decision tree so the result can be explained during the live demo.
-7. Open the visual decision tree from the GUI. The highlighted boxes and lines show the exact route for the current inputs.
+1. Prepare 42 labelled illustrative scenarios in `training_examples.csv` using soil moisture, temperature, and forecast rain as inputs and Now, Soon, or Wait as the label.
+2. Train a depth-limited decision tree with scikit-learn in `train_model.py`, then export its nodes to `model.js`.
+3. Build a static web page using HTML, CSS, and JavaScript. The browser traverses the exported tree for each new input. No server or external API is required for the demonstration.
+4. Validate moisture (0–100%), temperature (0–55 °C), rain (0–100 mm), and crop growth stage (Early, Mid, Late).
+5. Convert the predicted urgency to a date and use a stated lookup table for illustrative minutes. Display a local alert for a recommendation due today or tomorrow.
+6. Show the same results in a plot dashboard and highlight the exact branch through the visual decision tree.
 
 ## Algorithm
 
-1. Read the labelled examples from the CSV file and train the decision tree.
-2. Select a plot and enter moisture, temperature, expected rain, and growth stage.
-3. Check that moisture is between 0 and 100%, temperature between 0 and 55 °C, rain between 0 and 100 mm, and growth stage is selected.
-4. Pass moisture, temperature, and rain to the trained tree. It predicts **Now**, **Soon**, or **Wait**.
-5. If the result is **Now**, suggest today. If it is **Soon**, suggest tomorrow. If it is **Wait**, schedule no irrigation and suggest reviewing conditions in two days.
-6. For **Now** or **Soon**, look up an illustrative duration using the urgency and growth stage. Display the prediction, date, duration, and tree path.
-7. Refresh the dashboard with the updated plot result and show a local alert when the date is today or tomorrow.
+1. Load the exported tree and the selected plot conditions in the browser.
+2. Start at the root node. Compare the relevant input with the node threshold. Follow the left branch for a value at or below the threshold, or the right branch otherwise. Repeat until a leaf is reached.
+3. Read the leaf label: **Now**, **Soon**, or **Wait**.
+4. Map Now to today, Soon to tomorrow, and Wait to no scheduled irrigation and a review in two days.
+5. For Now or Soon, look up the illustrative duration from the urgency and growth stage. Display the result, local alert, and decision path. Update the dashboard row for that plot.
 
 ## Result
 
-The terminal demonstration was run on **4 October 2026**. It produced the following results:
+The model checks used **5 October 2026** as a fixed date. The three cases produced:
 
-| Scenario | Moisture | Temperature | Forecast rain | Stage | Predicted urgency | Suggested date | Duration |
-| --- | ---: | ---: | ---: | --- | --- | --- | ---: |
-| Dry soil | 25% | 34 °C | 0 mm | Mid | Now | 4 Oct 2026 | 40 min |
-| Moderate soil | 50% | 28 °C | 4 mm | Early | Soon | 5 Oct 2026 | 15 min |
-| Rain expected | 25% | 34 °C | 12 mm | Mid | Wait | No irrigation; review 6 Oct 2026 | 0 min |
+| Scenario | Moisture | Temperature | Rain forecast | Stage | Outcome | Date | Duration | Local alert |
+| --- | ---: | ---: | ---: | --- | --- | --- | ---: | --- |
+| Dry soil | 25% | 34 °C | 0 mm | Mid | Now | 5 Oct 2026 | 40 min | Due today |
+| Moderate soil | 50% | 28 °C | 4 mm | Early | Soon | 6 Oct 2026 | 15 min | Due tomorrow |
+| Rain expected | 25% | 34 °C | 12 mm | Mid | Wait | No irrigation; review 7 Oct 2026 | 0 min | No alert |
 
-Eight automated checks passed: the three scenarios above, rejection of invalid soil moisture and growth stage, completeness of the tree diagram layout, the dashboard statuses and alerts, and a changed plot's updated prediction. The program also rejects out-of-range temperature or rain. The live GUI offers the same preset inputs and allows manual changes.
+The Dry soil and Rain expected cases differ only in forecast rain. Their highlighted routes end at different leaves. Six JavaScript checks passed, including these outcomes, input validation, agreement with the illustrative labels, and completeness of the tree layout. The date displayed in the live page follows the presentation computer's current date.
 
-The dashboard displays **Due today** for Plot A, **Due tomorrow** for Plot B, and **No alert** for Plot C. These are local in-app alerts based on the recommendation date. The dashboard supports the selected recommendation requirement; it does not send SMS or retrieve live sensor readings.
+![Full exported decision tree](decision_tree.svg)
 
-### Visual result
+## Conclusion and limitations
 
-The following diagram shows the full tree trained on the illustrative examples. The **View decision tree** button highlights the branch for whichever plot conditions are currently entered. With moisture fixed at 25% and temperature fixed at 34 °C, changing forecast rain from 0 mm to 12 mm changes the route from **Now** to **Wait**.
-
-![Trained decision tree](decision_tree.svg)
-
-## Conclusion and limitation
-
-The prototype demonstrates the selected recommendation requirement from input to visible recommendation. The decision tree is easy to inspect, and the dashboard makes the changes and alerts visible. Since training labels and durations are illustrative, the result is suitable for demonstrating the software workflow only. It has not been validated for real irrigation decisions.
+The prototype demonstrates the selected recommendation requirement from input through a visible, explainable result. The dashboard and local alerts make the outcome easy to inspect. It uses simulated inputs and classroom labels; the model and duration values have **not** been validated for real irrigation decisions. This version does not connect to sensors, fetch live weather, send SMS, or persist changes after reload.

@@ -1,62 +1,56 @@
-# AI Based Irrigation Recommendation
+# Sugarcane Irrigation Advisor
 
-A small Object Oriented Software Engineering lab CA prototype for the **AI Irrigation Advisory System for Sugarcane Crop**. It demonstrates one functional requirement: use plot conditions to suggest an irrigation date and duration.
+A browser-based OOSE lab CA prototype for the **AI Irrigation Advisory System for Sugarcane Crop**. The selected functional requirement is an irrigation recommendation from plot conditions. The dashboard, local alerts, and decision tree diagram help explain that result during a live demo.
 
-The app is designed for a short live demonstration. It uses simulated readings, an interpretable decision tree, and three ready-made scenarios. It does not connect to real sensors, weather services, or irrigation pumps.
+## Run the web app
 
-## Run on Windows
+1. Download the repository as a ZIP and extract it.
+2. Double-click **`index.html`** in the extracted folder. Chrome or Edge works well.
+3. Keep `index.html`, `styles.css`, `app.js`, and `model.js` together.
 
-Install Python 3.11 or newer. In a terminal opened inside this folder, run:
+There is **no server, installation, internet connection, or API key** needed to run the demo. For a presentation, open the page before class and use the browser's full-screen mode if helpful.
 
-```powershell
+## Three views
+
+- **Recommendation:** Choose one of three sample plots or enter moisture, temperature, forecast rain, and growth stage. The page validates the values and displays urgency, a proposed date, illustrative minutes, an app alert, and the decision path.
+- **Plot dashboard:** Shows the three plots side by side, counts for Now/Soon/Wait, and local alerts for dates today or tomorrow. Inspect a row to return to its inputs.
+- **Decision tree:** Draws the exported model in the browser. Gold highlights the current plot's exact route. The plus, minus, and Fit controls change the diagram size.
+
+The **Dry soil** and **Rain expected** examples have the same moisture (25%), temperature (34 °C), and growth stage (Mid). Only forecast rain changes from 0 to 12 mm, switching the result from Now to Wait. This is the clearest comparison to demonstrate.
+
+## How the model works
+
+`training_examples.csv` has 42 **illustrative, labelled classroom scenarios**, not real farm measurements. `train_model.py` trains a scikit-learn `DecisionTreeClassifier` and exports its nodes to `model.js`. The web app reads those nodes and follows the threshold questions locally in the browser. It does not train a new model or contact a server when the page opens.
+
+The model predicts **Now**, **Soon**, or **Wait** from moisture, temperature, and rain. Simple application rules map Now to today, Soon to tomorrow, and Wait to no irrigation with a review date in two days. A separate lookup table uses growth stage and urgency for illustrative durations. The model does **not** predict an exact number of minutes.
+
+The labels and durations are assumptions made for a software demonstration. Agreement with the 42 examples is **not** evidence of real-world accuracy. Real use would require measured farm data, expert labels, independent testing, and agronomic validation. Alerts appear on the page only; no SMS is sent. Edited plot values reset on reload.
+
+## Optional verification or retraining
+
+The app runs without Python. If Node.js is available, run the model checks with:
+
+```bash
+node test_web.js
+```
+
+If you edit `training_examples.csv`, regenerate `model.js` with Python and scikit-learn:
+
+```bash
 py -m pip install -r requirements.txt
-py app.py
+py train_model.py
 ```
 
-If `py` is unavailable, replace it with `python`. The app uses Tkinter, which is included in a normal Windows Python installation. Keep `training_examples.csv` beside `app.py`.
-
-For a quick terminal demo or automated check:
-
-```powershell
-py app.py --demo
-py -m unittest -v
-```
-
-## Live demo
-
-1. Open **Plot dashboard**. The three sample plots show Now, Soon, and Wait, plus local alerts for plots due today or tomorrow.
-2. Return to **Recommendation**, click **Dry soil**, then **Generate recommendation**. The model suggests irrigation today and shows a local app alert.
-3. Click **View decision tree**. Gold boxes and lines trace the current inputs to the Now leaf.
-4. Click **Rain expected**, generate again, and view its different path to Wait. Moisture and temperature match Dry soil; only the rain forecast differs. The dashboard updates when you generate a recommendation.
-5. If time permits, enter soil moisture `120` to show input validation.
-
-You can also change the numbers directly. The plot name identifies the demo plot; the model uses soil moisture, temperature, and forecast rain for the urgency class. The crop stage affects the illustrative duration.
-
-## How it works
-
-- `training_examples.csv` contains **42 illustrative, labelled scenarios**, not field measurements. The classroom labelling assumptions are: substantial forecast rain or high soil moisture means *Wait*; low moisture with little expected rain means *Now*; some intermediate cases mean *Soon*. High temperature can increase urgency in a moderately dry case.
-- `IrrigationAdvisor` trains a `DecisionTreeClassifier` from those examples and predicts **Now**, **Soon**, or **Wait**. The displayed decision path shows the comparisons made by the trained tree.
-- The program converts *Now* to today's date, *Soon* to tomorrow's date, and *Wait* to no scheduled irrigation plus a review in two days.
-- `DURATIONS` maps urgency and growth stage to demonstration minutes. These times are explicit prototype assumptions, not outputs learned from farm observations.
-- `PlotConditions` validates inputs, and `IrrigationApp` handles the Tkinter interface.
-- The plot dashboard summarizes the three simulated plots. It shows **local app alerts** for recommendations dated today or tomorrow. No external notification is sent, and changes last only for the current session.
-
-The sample examples were labelled for software demonstration. Agreement with those examples is **not** evidence of real-world prediction accuracy or safe irrigation guidance. A deployed system would need field data, agronomist-approved targets, independent validation, current forecasts, and local irrigation constraints.
-
-## Visual decision tree
-
-The diagram below shows the tree trained from the current sample CSV. Each blue box asks a yes/no question; colored end boxes show the predicted urgency. The app highlights the route for the plot currently entered.
-
-![Trained irrigation decision tree](decision_tree.svg)
+Then reload `index.html`. These Python commands are **not needed** for the live demo.
 
 ## Files
 
 | File | Purpose |
 | --- | --- |
-| `app.py` | Model, recommendation logic, GUI, and terminal demo |
-| `training_examples.csv` | Illustrative labelled scenarios |
-| `test_app.py` | Checks three scenarios and invalid inputs |
-| `decision_tree.svg` | Full diagram of the trained tree |
+| `index.html`, `styles.css`, `app.js` | Offline web interface and browser prediction logic |
+| `model.js` | Exported decision tree used by the web page |
+| `training_examples.csv`, `train_model.py` | Illustrative examples and optional training/export step |
+| `test_web.js` | Model and input validation checks |
+| `decision_tree.svg` | Printable full tree diagram |
 | `CA_REPORT.md` | Aim, methodology, algorithm, and observed results |
-| `PRESENTATION_GUIDE.md` | Short live-demo sequence, speaking notes, and viva answers |
-| `requirements.txt` | Python dependency |
+| `PRESENTATION_GUIDE.md` | Three-minute demo and viva preparation |

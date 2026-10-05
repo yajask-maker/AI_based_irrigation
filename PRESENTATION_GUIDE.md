@@ -1,49 +1,45 @@
 # OOSE Lab CA Presentation Guide
 
-## What to say at the start
+## Opening in one sentence
 
-"My Experiment 1 project is an AI Irrigation Advisory System for sugarcane. For this CA I implemented its irrigation recommendation requirement. The user selects a plot, enters soil moisture, temperature, expected rain, and growth stage, and the application suggests when to irrigate and for how long. I added a dashboard and local alerts to make the output easy to inspect."
+"For my sugarcane irrigation use case, I implemented the irrigation recommendation requirement: the browser app takes plot and weather conditions, uses a decision tree to classify urgency, and shows a proposed date, duration, and explanation."
 
-## Three minute live demo
+## Three-minute live demo
 
-| Time | Action | What to say |
+| Time | Action in the browser | What to say |
 | --- | --- | --- |
-| 0:00–0:25 | Open **Plot dashboard**. | "These are three simulated plots. The dashboard shows distinct outcomes and which plots are due today or tomorrow." |
-| 0:25–1:05 | Open **Recommendation**; choose **Dry soil**; click **Generate recommendation**. | "For 25% moisture and no expected rain, the model predicts Now. The app converts that into today's date and an illustrative 40-minute duration for the Mid stage. A local alert appears." |
-| 1:05–1:45 | Click **View decision tree**. Follow the gold path from the root to **Now**. | "The tree asks simple threshold questions. For this input, moisture is at most 55%, rain is at most 8 and then 2 mm, and moisture is at most 35%. That path ends at Now." |
-| 1:45–2:25 | Close the tree; choose **Rain expected**; generate and view the tree again. | "Moisture and temperature are unchanged. Only the rain forecast changed from 0 to 12 mm. That sends the tree down a different branch to Wait, so irrigation is not scheduled." |
-| 2:25–2:50 | Return to **Plot dashboard**. | "The dashboard displays the current outcomes and only local alerts for plots due today or tomorrow. It is a presentation of the recommendation result, not a separate AI model." |
-| 2:50–3:00 | Point to the demo note. | "The 42 training scenarios and durations are illustrative. Real deployment would require measured farm data and agronomic validation." |
+| 0:00–0:25 | Open **Plot dashboard**. | "These are three simulated plots. The cards show how many need irrigation now, soon, or after a wait; the alerts are local to this page." |
+| 0:25–1:05 | Open **Recommendation** and choose **Dry soil**. | "With 25% moisture and no expected rain, the exported decision tree predicts Now. The app maps that to today's date and an illustrative 40-minute duration for the Mid stage." |
+| 1:05–1:45 | Select **See highlighted decision path**. | "Gold marks the comparisons followed for these inputs. The path ends at the Now leaf. The model predicts urgency; simple application rules add the date and minutes." |
+| 1:45–2:25 | Return to **Recommendation**, choose **Rain expected**, then view the tree again. | "Moisture, temperature, and stage are unchanged. Only forecast rain rises from 0 to 12 mm, so the tree follows a different branch to Wait. No irrigation is scheduled." |
+| 2:25–2:50 | Open **Plot dashboard** again. | "The dashboard presents the same model results and shows local alerts for plots due today or tomorrow. It is a supporting view of the selected requirement." |
+| 2:50–3:00 | Point to the classroom note. | "The 42 training examples and durations are illustrative. Real farm use requires measured data and agronomic validation." |
 
-If there is extra time, enter `120` for soil moisture and click Generate to show validation. Avoid making the invalid-input step the centre of the demo.
+If extra time remains, enter `120` for moisture and generate again to demonstrate validation. Keep the recommendation comparison as the centre of the presentation.
 
-## Model explanation in plain language
+## Explain the architecture simply
 
-The decision tree learns threshold questions from 42 labelled classroom examples. It predicts one of three urgency labels: **Now**, **Soon**, or **Wait**. The program then maps Now to today, Soon to tomorrow, and Wait to no scheduled irrigation. A separate lookup table uses crop stage to choose illustrative minutes; the model does **not** predict the exact duration.
+`train_model.py` trained the decision tree from the CSV and exported its threshold questions to `model.js`. `app.js` follows those questions in the browser and draws the highlighted route. `index.html` and `styles.css` make the interface. The page needs no backend or internet connection. A browser reload restores the three sample plots.
 
-The dashboard is updated from the same recommendation engine. It does not use another model. Its alerts are shown inside the program for dates today and tomorrow; no SMS is sent.
+## Likely viva questions
 
-## Likely questions
+**Is this really machine learning?** Yes. The decision tree was fitted to labelled examples using scikit-learn. The browser runs the exported trained tree; it does not retrain it on every click.
 
-**Is this actually AI?** Yes. `DecisionTreeClassifier` is a machine learning classifier trained on labelled examples. The diagram shows the learned splits.
+**Where did the data come from?** The 42 examples are explicitly illustrative classroom scenarios, not historical farm records.
 
-**Where did the data come from?** It is a small, explicitly labelled classroom dataset made to demonstrate the software flow. It is not historical farm data.
+**What is its accuracy?** Real-world accuracy has not been established. Matching the classroom labels and passing software checks do not replace an independent field-data evaluation.
 
-**What is the model's accuracy?** We have not measured real-world accuracy. The scripted cases and automated checks verify program behaviour, not field performance. A real evaluation needs independent farm measurements and expert labels.
+**Does the model predict exact duration?** No. It predicts urgency. A separate table combines urgency and crop stage to choose illustrative minutes.
 
-**Why does the app show a duration?** The model predicts urgency; a simple table combines urgency with growth stage to choose demo minutes. These times need agronomist validation before real use.
+**What if the sensor reading or forecast changes?** Enter the new value and generate again. The result, dashboard, alert, and highlighted tree path update. Automatic sensor ingestion is outside this prototype.
 
-**What if readings change?** Enter the new values and generate again. The plot's dashboard row and local alert update. Automatic IoT ingestion is outside this prototype.
+**Are notifications sent to phones?** No. This demo shows local app alerts only.
 
-**Where is object orientation?** `PlotConditions` holds and validates inputs, `IrrigationAdvisor` trains and uses the model, `IrrigationApp` manages the interface, and `DecisionTreeView` draws the tree.
+**Where is object orientation?** The broader OOSE project separates plot data, recommendation logic, and the interface. This web prototype keeps training/export separate from browser inference and presentation. It demonstrates one functional requirement, rather than claiming to be the full deployed system.
 
-## Before presenting
+## Before class
 
-Open the downloaded repository folder in a terminal and run:
-
-```powershell
-py -m pip install -r requirements.txt
-py app.py
-```
-
-Keep `app.py` and `training_examples.csv` together. Open the application once on the presentation PC, confirm the **View decision tree** window opens, and keep the three sample buttons ready. The dates shown by the app follow the computer's current date.
+1. Download the latest repository ZIP, extract it, and **double-click `index.html`**. No installation is needed for the demo.
+2. Confirm all three sample buttons, the Plot dashboard, and the Decision tree view open in your presentation browser.
+3. Use browser full-screen mode if it helps visibility. Keep the repository folder available so `decision_tree.svg` can be opened as a backup diagram.
+4. The dates on the live page use the computer's current date, so say “today” and “tomorrow” rather than memorizing calendar dates.
