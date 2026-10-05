@@ -16,6 +16,7 @@ To implement and demonstrate a browser-based prototype that accepts a plot's soi
 5. Convert the predicted urgency to a date and use a stated lookup table for illustrative minutes. Display a local alert for a recommendation due today or tomorrow.
 6. Optionally find an Indian town through Open-Meteo geocoding and fetch modelled current temperature, the next 24 hours of forecast precipitation, and reference evapotranspiration (ET₀). The user supplies actual plot soil moisture and may override any weather field. If online weather is unavailable, manual input still works.
 7. Show the same results in a plot dashboard and highlight the exact branch through the visual decision tree. With fetched weather, display a separate potential crop water-use context using ET₀ × approximate FAO sugarcane stage coefficient. It is not an irrigation dose.
+8. Add a Monitoring & trends view: display four clearly labelled classroom sample points, and separately store newly submitted soil readings with timestamps, inputs, and urgency in the browser. Plot recorded moisture over time, and draw 24 hourly rain bars only when a forecast was fetched.
 
 ## Algorithm
 
@@ -24,6 +25,7 @@ To implement and demonstrate a browser-based prototype that accepts a plot's soi
 3. Read the leaf label: **Now**, **Soon**, or **Wait**.
 4. Map Now to today, Soon to tomorrow, and Wait to no scheduled irrigation and a review in two days.
 5. For Now or Soon, look up the illustrative duration from the urgency and growth stage. Display the result, local alert, and decision path. Update the dashboard row for that plot. If live weather was used, show ET₀ × stage coefficient separately as potential crop water use.
+6. On an explicit Generate submission, save the entered conditions, current time, and predicted urgency in local browser storage. Refresh the selected plot's recorded history graph. Keep illustrative sample history separate from recorded data; show the fetched hourly forecast in its own bar chart.
 
 ## Result
 
@@ -35,12 +37,12 @@ The model checks used **5 October 2026** as a fixed date. The three cases produc
 | Moderate soil | 50% | 28 °C | 4 mm | Early | Soon | 6 Oct 2026 | 15 min | Due tomorrow |
 | Rain expected | 25% | 34 °C | 12 mm | Mid | Wait | No irrigation; review 7 Oct 2026 | 0 min | No alert |
 
-The Dry soil and Rain expected cases differ only in forecast rain. Their highlighted routes end at different leaves. Eight JavaScript checks passed, including these outcomes, input validation, agreement with the illustrative labels, tree layout, and mocked weather-response parsing and request construction. The date displayed in the live page follows the presentation device's current date. The online weather button fills values for a chosen town; the user must still enter soil moisture for the plot.
+The Dry soil and Rain expected cases differ only in forecast rain. Their highlighted routes end at different leaves. Nine JavaScript checks passed, including these outcomes, input validation, agreement with the illustrative labels, tree layout, history restoration, and mocked weather-response parsing and request construction. The date displayed in the live page follows the presentation device's current date. The online weather button fills values for a chosen town; the user must still enter soil moisture for the plot. The monitoring page shows labelled illustrative history before a user records new readings. Explicit submissions add time-stamped points to the separate recorded graph; fetched hourly rain appears as bars.
 
 ![Full exported decision tree](decision_tree.svg)
 
 ## Conclusion and limitations
 
-The prototype demonstrates the selected recommendation requirement from input through a visible, explainable result. Live weather can provide current modelled temperature and forecast rain, while plot-specific soil moisture is entered manually. Its training labels, fixed thresholds, and duration values have **not** been validated for real irrigation decisions. It does not connect to a field sensor, send SMS, or persist changes after reload. Effective rainfall and stored soil water must be assessed before treating potential crop water use as an irrigation requirement.
+The prototype demonstrates the selected recommendation requirement from input through a visible, explainable result. Live weather can provide current modelled temperature and forecast rain, while plot-specific soil moisture is entered manually. Its training labels, thresholds, and duration values have **not** been validated for real irrigation decisions. It does not connect to a field sensor or send SMS. Current plot inputs reset on reload; explicitly recorded history persists only in the same browser unless its storage is cleared. Effective rainfall and stored soil water must be assessed before treating potential crop water use as an irrigation requirement.
 
 References: [Open-Meteo forecast API](https://open-meteo.com/en/docs), [Open-Meteo geocoding API](https://open-meteo.com/en/docs/geocoding-api), [FAO sugarcane crop coefficients](https://www.fao.org/4/X0490E/x0490e0b.htm), [FAO irrigation scheduling](https://www.fao.org/4/T7202E/t7202e06.htm).

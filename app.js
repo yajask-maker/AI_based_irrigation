@@ -21,6 +21,12 @@ const FEATURE_NAMES = {
 };
 
 const UNITS = { moisture: "%", temperature: " °C", rain: " mm" };
+const HISTORY_KEY = "irrigation-advisor-readings-v1";
+const SAMPLE_MOISTURE = {
+  "Plot A": [58, 46, 34, 25],
+  "Plot B": [69, 62, 54, 50],
+  "Plot C": [55, 42, 34, 25]
+};
 
 function validateConditions(input) {
   if (!Object.hasOwn(SAMPLE_PLOTS, input.plot)) throw new Error("Select a plot.");
@@ -108,8 +114,34 @@ function parseWeatherForecast(location, data) {
     temperature: Math.round(temperature * 10) / 10,
     rain,
     et0,
-    modelTime: data.current.time || "latest available"
+    modelTime: data.current.time || "latest available",
+    hourlyRain: rainHours.map(Number),
+    hourlyTimes: data.hourly.time?.slice(1, 25) || []
   };
+}
+
+function sampleHistory(plot, today = new Date()) {
+  return SAMPLE_MOISTURE[plot].map((moisture, index) => {
+    const date = dayOffset(today, index - 3);
+    const conditions = { ...SAMPLE_PLOTS[plot], moisture };
+    return { time: date.toISOString(), conditions, urgency: predict(conditions, date).urgency, source: "Sample" };
+  });
+}
+
+function loadHistory(storage) {
+  try {
+    const saved = JSON.parse(storage.getItem(HISTORY_KEY) || "[]");
+    if (!Array.isArray(saved)) return [];
+    return saved.filter(entry => {
+      if (!entry || !Number.isFinite(Date.parse(entry.time)) || !["Now", "Soon", "Wait"].includes(entry.urgency)) return false;
+      try { return predict(entry.conditions, new Date(entry.time)).urgency === entry.urgency; }
+      catch { return false; }
+    }).slice(-60);
+  } catch { return []; }
+}
+
+function makeHistoryEntry(result, time = new Date(), source = "Manual weather") {
+  return { time: time.toISOString(), conditions: { ...result.conditions }, urgency: result.urgency, source };
 }
 
 async function fetchWeatherForCity(city, fetcher = fetch) {
@@ -173,11 +205,15 @@ function makeSvg(tag, attributes = {}, content = "") {
 }
 
 function initApp() {
+  let browserStorage = null;
+  try { browserStorage = window.localStorage; } catch { /* The app still works without storage. */ }
   const state = {
     plots: Object.fromEntries(Object.entries(SAMPLE_PLOTS).map(([key, value]) => [key, { ...value }])),
     weatherByPlot: Object.fromEntries(Object.keys(SAMPLE_PLOTS).map(key => [key, null])),
     pendingWeather: null,
     current: null,
+    history: browserStorage ? loadHistory(browserStorage) : [],
+    historyMode: "sample",
     zoom: 0.85,
     treeWidth: 0,
     treeHeight: 0
@@ -311,6 +347,114 @@ function initApp() {
     }
   }
 
+  function renderMoistureChart(records, isSample) {
+    const svg = byId("moisture-chart");
+    svg.replaceChildren();
+    svg.setAttribute("aria-label", `${isSample ? "Illustrative" : "Recorded"} soil moisture history for ${byId("monitor-plot").value}`);
+    if (!records.length) {
+      svg.append(makeSvg("text", { x: 350, y: 130, "text-anchor": "middle", class: "chart-empty" }, "No recorded readings yet"));
+      return;
+    }
+    const left = 51, right = 671, top = 20, bottom = 219;
+    for (const level of [0, 25, 50, 75, 100]) {
+      const y = bottom - level / 100 * (bottom - top);
+      svg.append(makeSvg("line", { x1: left, y1: y, x2: right, y2: y, class: "chart-grid" }));
+      svg.append(makeSvg("text", { x: left - 11, y: y + 4, "text-anchor": "end", class: "chart-axis" }, `${level}`));
+    }
+    const points = records.map((entry, index) => ({
+      x: records.length === 1 ? (left + right) / 2 : left + index / (records.length - 1) * (right - left),
+      y: bottom - entry.conditions.moisture / 100 * (bottom - top),
+      entry
+    }));
+    if (points.length > 1) svg.append(makeSvg("polyline", {
+      points: points.map(point => `${point.x},${point.y}`).join(" "),
+      class: isSample ? "chart-series sample" : "chart-series"
+    }));
+    const labelEvery = Math.max(1, Math.ceil(records.length / 6));
+    points.forEach(({ x, y, entry }, index) => {
+      const circle = makeSvg("circle", { cx: x, cy: y, r: 6, class: `chart-point ${entry.urgency.toLowerCase()}${isSample ? " sample" : ""}` });
+      circle.append(makeSvg("title", {}, `${formatDate(new Date(entry.time))}: ${entry.conditions.moisture}% soil moisture, ${entry.urgency} (${entry.source})`));
+      svg.append(circle);
+      if (index % labelEvery === 0 || index === records.length - 1) {
+        svg.append(makeSvg("text", { x, y: 245, "text-anchor": "middle", class: "chart-axis" },
+          isSample ? new Date(entry.time).toLocaleDateString("en-IN", { day: "numeric", month: "short" })
+            : new Date(entry.time).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })));
+      }
+    });
+  }
+
+  function renderRainChart(weather) {
+    const svg = byId("rain-chart");
+    svg.replaceChildren();
+    const values = weather?.hourlyRain;
+    byId("rain-chart-container").hidden = !values;
+    byId("rain-caption").textContent = values
+      ? `${weather.location} · ${weather.rain} mm total forecast rain · weather model time ${weather.modelTime} local.`
+      : "Fetch current weather on the Recommendation tab to show the hourly forecast here.";
+    if (!values) return;
+    const left = 40, bottom = 164, width = 505;
+    const scale = Math.max(1, Math.ceil(Math.max(...values) * 2) / 2);
+    for (const value of [0, scale / 2, scale]) {
+      const y = bottom - value / scale * 130;
+      svg.append(makeSvg("line", { x1: left, y1: y, x2: left + width, y2: y, class: "chart-grid" }));
+      svg.append(makeSvg("text", { x: 33, y: y + 4, "text-anchor": "end", class: "chart-axis" }, `${+value.toFixed(1)}`));
+    }
+    values.forEach((value, index) => {
+      const x = left + index * width / 24 + 3;
+      const bar = makeSvg("rect", { x, y: bottom - value / scale * 130, width: width / 24 - 6, height: Math.max(1, value / scale * 130), class: "rain-bar" });
+      bar.append(makeSvg("title", {}, `Hour ${index + 1}: ${value} mm forecast rain`));
+      svg.append(bar);
+    });
+    for (const hour of [0, 6, 12, 18, 24]) {
+      svg.append(makeSvg("text", { x: left + hour * width / 24, y: 188, "text-anchor": "middle", class: "chart-axis" }, `+${hour} h`));
+    }
+  }
+
+  function renderMonitor() {
+    const plot = byId("monitor-plot").value;
+    const conditions = state.plots[plot];
+    const weather = state.weatherByPlot[plot];
+    const current = predict(conditions);
+    const isSample = state.historyMode === "sample";
+    const records = isSample ? sampleHistory(plot) : state.history.filter(entry => entry.conditions.plot === plot);
+    byId("monitor-moisture").textContent = `${conditions.moisture}%`;
+    byId("monitor-weather").textContent = weather ? "Forecast fetched" : "Manual / sample";
+    byId("monitor-weather-time").textContent = weather ? `${weather.location} · ${weather.modelTime} local` : "Fetch current weather to update";
+    byId("monitor-urgency").textContent = current.urgency;
+    byId("monitor-recommendation-time").textContent = "From current plot inputs";
+    byId("history-title").textContent = isSample ? "Illustrative history" : "Recorded history";
+    byId("history-key").textContent = isSample ? "Classroom examples" : "Entered readings";
+    byId("history-caption").textContent = isSample
+      ? "These four past points are invented classroom examples, shown only to demonstrate the chart. They are not sensor measurements."
+      : "Each point was saved when Generate recommendation was pressed with entered values on this browser.";
+    for (const button of document.querySelectorAll(".mode-btn")) {
+      const active = button.dataset.mode === state.historyMode;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
+    }
+    renderMoistureChart(records, isSample);
+    renderRainChart(weather);
+    const events = byId("history-events");
+    events.replaceChildren();
+    if (!records.length) {
+      const empty = document.createElement("p");
+      empty.className = "muted";
+      empty.textContent = "Enter a plot reading and click Generate recommendation to add the first recorded point.";
+      events.append(empty);
+    }
+    for (const entry of records.slice(-5).reverse()) {
+      const item = document.createElement("div");
+      item.className = "history-event";
+      const label = document.createElement("span");
+      label.textContent = `${new Date(entry.time).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })} · ${entry.conditions.moisture}% · ${entry.source}`;
+      const badge = document.createElement("b");
+      badge.className = `row-status ${entry.urgency.toLowerCase()}`;
+      badge.textContent = entry.urgency;
+      item.append(label, badge);
+      events.append(item);
+    }
+  }
+
   function renderTree() {
     const result = state.current;
     const svg = byId("decision-tree");
@@ -390,6 +534,19 @@ function initApp() {
       renderResult(result);
       renderDashboard();
       renderTree();
+      if (event) {
+        state.history.push(makeHistoryEntry(result, new Date(), state.pendingWeather ? "Fetched weather + entered soil" : "Entered values"));
+        state.history = state.history.slice(-60);
+        state.historyMode = "recorded";
+        try {
+          if (!browserStorage) throw new Error("Storage unavailable");
+          browserStorage.setItem(HISTORY_KEY, JSON.stringify(state.history));
+          byId("history-storage").textContent = "Recorded history is saved in this browser.";
+        } catch {
+          byId("history-storage").textContent = "This browser cannot save history; points will last until the page closes.";
+        }
+      }
+      renderMonitor();
       return result;
     } catch (error) {
       byId("input-error").textContent = error.message;
@@ -439,6 +596,17 @@ function initApp() {
     });
   }
   for (const tab of document.querySelectorAll(".tab")) tab.addEventListener("click", () => showTab(tab.dataset.tab));
+  byId("monitor-plot").addEventListener("change", renderMonitor);
+  for (const button of document.querySelectorAll(".mode-btn")) button.addEventListener("click", () => {
+    state.historyMode = button.dataset.mode;
+    renderMonitor();
+  });
+  byId("record-reading").addEventListener("click", () => {
+    loadPlot(byId("monitor-plot").value);
+    generate();
+    showTab("advisor");
+    byId("moisture").focus();
+  });
   byId("open-tree").addEventListener("click", () => showTab("tree"));
   byId("zoom-in").addEventListener("click", () => { state.zoom = Math.min(1.5, state.zoom + 0.15); applyZoom(); });
   byId("zoom-out").addEventListener("click", () => { state.zoom = Math.max(0.45, state.zoom - 0.15); applyZoom(); });
@@ -452,4 +620,4 @@ function initApp() {
 }
 
 if (typeof document !== "undefined") document.addEventListener("DOMContentLoaded", initApp);
-if (typeof module !== "undefined") module.exports = { SAMPLE_PLOTS, MODEL, validateConditions, predict, treeLayout, describeDecision, parseWeatherForecast, fetchWeatherForCity };
+if (typeof module !== "undefined") module.exports = { SAMPLE_PLOTS, MODEL, validateConditions, predict, treeLayout, describeDecision, parseWeatherForecast, fetchWeatherForCity, sampleHistory, loadHistory, makeHistoryEntry, HISTORY_KEY };

@@ -8,7 +8,7 @@ A browser-based OOSE lab CA prototype for the **AI Irrigation Advisory System fo
 2. Double-click **`index.html`** in the extracted folder. Chrome or Edge works well.
 3. Keep `index.html`, `styles.css`, `app.js`, and `model.js` together.
 
-There is **no server, installation, or API key** needed. Manual entry and all three views work offline. The optional **Use current weather** button needs internet access. For a presentation, open the page before class and use the browser's full-screen mode if helpful.
+There is **no server, installation, or API key** needed. Manual entry and all four views work offline. The optional **Use current weather** button needs internet access. For a presentation, open the page before class and use the browser's full-screen mode if helpful.
 
 ## Enter live conditions
 
@@ -18,11 +18,14 @@ There is **no server, installation, or API key** needed. Manual entry and all th
 
 The modelled weather is real, current external forecast data, but it is not an on-plot sensor reading. Open-Meteo's next 24 hourly forecast values are summed after the current hour. The additional water-use context multiplies Open-Meteo's reference evapotranspiration (ET₀) by an approximate FAO sugarcane stage factor (Early 0.40, Mid 1.25, Late 0.75). This is **potential crop water use**, not the amount to irrigate: effective rainfall, stored soil water, soil type, irrigation efficiency, and local calibration are still needed.
 
-## Three views
+## Four views
 
 - **Recommendation:** Enter plot values yourself or fill weather from a live forecast. The page validates values and displays urgency, a proposed date, illustrative minutes, a local alert, the decision path, and weather context when available.
 - **Plot dashboard:** Shows the three plots side by side, counts for Now/Soon/Wait, and local alerts for dates today or tomorrow. Inspect a row to return to its inputs.
 - **Decision tree:** Draws the exported model in the browser. Gold highlights the current plot's exact route. The plus, minus, and Fit controls change the diagram size.
+- **Monitoring & trends:** Select a plot to inspect a soil-moisture graph, its latest input and recommendation, and any fetched hourly rain forecast. Sample history contains four clearly marked illustrative classroom points. My recorded history contains only values saved when you press Generate recommendation in the input form. Readings are stored in this browser (up to 60 across plots) and remain after a reload; clearing browser data removes them.
+
+To demonstrate the chart, open **Monitoring & trends** and show **Sample history**. Click **Record new reading**, enter plot conditions, and click **Generate recommendation**. Return to Monitoring & trends: **My recorded history** now has a point with its urgency label. Repeat with another entered reading to form a line. For the forecast bar chart, use **Use current weather** before generating; 24 hourly forecast bars then appear for that plot. The app does not poll a soil sensor or invent live moisture readings.
 
 The **Dry soil** and **Rain expected** examples have the same moisture (25%), temperature (34 °C), and growth stage (Mid). Only forecast rain changes from 0 to 12 mm, switching the result from Now to Wait. This is the clearest comparison to demonstrate.
 
@@ -32,7 +35,7 @@ The **Dry soil** and **Rain expected** examples have the same moisture (25%), te
 
 The model predicts **Now**, **Soon**, or **Wait** from moisture, temperature, and rain. Simple application rules map Now to today, Soon to tomorrow, and Wait to no irrigation with a review date in two days. A separate lookup table uses growth stage and urgency for illustrative durations. The model does **not** predict an exact number of minutes.
 
-The labels and durations are assumptions made for a software demonstration. Agreement with the 42 examples is **not** evidence of real-world accuracy. Real use would require measured farm data, calibrated soil readings, expert labels, independent testing, and agronomic validation. A current weather forecast does not validate the classifier. Alerts appear on the page only; no SMS is sent. Edited plot values reset on reload.
+The labels and durations are assumptions made for a software demonstration. Agreement with the 42 examples is **not** evidence of real-world accuracy. Real use would require measured farm data, calibrated soil readings, expert labels, independent testing, and agronomic validation. A current weather forecast does not validate the classifier. Alerts appear on the page only; no SMS is sent. Edited plot values reset on reload, while separately recorded history remains in the same browser.
 
 Sources: [Open-Meteo weather API](https://open-meteo.com/en/docs), [Open-Meteo geocoding API](https://open-meteo.com/en/docs/geocoding-api), [FAO sugarcane coefficients](https://www.fao.org/4/X0490E/x0490e0b.htm), and [FAO irrigation scheduling guidance](https://www.fao.org/4/T7202E/t7202e06.htm).
 

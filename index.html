@@ -38,6 +38,7 @@
       <button type="button" class="tab active" data-tab="advisor" aria-current="page">01 <span>Recommendation</span></button>
       <button type="button" class="tab" data-tab="dashboard">02 <span>Plot dashboard</span></button>
       <button type="button" class="tab" data-tab="tree">03 <span>Decision tree</span></button>
+      <button type="button" class="tab" data-tab="monitor">04 <span>Monitoring &amp; trends</span></button>
     </nav>
 
     <section id="advisor-panel" class="view active" aria-label="Recommendation">
@@ -105,7 +106,7 @@
         <div class="panel-heading"><div><div class="section-label">LIVE DEMO STATE</div><h2>Plot status</h2></div></div>
         <div class="table-scroll"><table><thead><tr><th>Plot</th><th>Moisture</th><th>Rain</th><th>Outcome</th><th>Suggested date</th><th>Duration</th><th></th></tr></thead><tbody id="dashboard-rows"></tbody></table></div>
       </div>
-      <p class="demo-note">Alerts are shown inside this page only. No SMS is sent, and edits reset when the page is reloaded.</p>
+      <p class="demo-note">Alerts are shown inside this page only. No SMS is sent. Plot inputs reset on reload; recorded history remains in this browser.</p>
     </section>
 
     <section id="tree-panel" class="view" aria-label="Decision tree" hidden>
@@ -113,6 +114,34 @@
       <div class="tree-layout">
         <aside class="panel tree-explanation"><div class="section-label">CURRENT PATH</div><h3 id="tree-plot">Plot A</h3><ol id="tree-steps"></ol><p class="muted">The tree predicts urgency. The date and duration are added by simple, visible rules after that prediction.</p></aside>
         <div class="panel tree-panel"><div class="tree-toolbar"><span>Trained tree · <span id="tree-count">42</span> sample cases</span><div><button type="button" id="zoom-out" aria-label="Zoom out">−</button><button type="button" id="zoom-reset">Fit</button><button type="button" id="zoom-in" aria-label="Zoom in">+</button></div></div><div id="tree-viewport" class="tree-viewport"><svg id="decision-tree" role="img" aria-label="Decision tree with highlighted prediction path"></svg></div></div>
+      </div>
+    </section>
+
+    <section id="monitor-panel" class="view" aria-label="Monitoring and trends" hidden>
+      <div class="view-heading"><div><div class="section-label">PLOT MONITORING</div><h2>See how readings change.</h2><p>Compare recorded soil readings and recommendations for one plot. Forecast rain appears when weather has been fetched.</p></div><button type="button" id="record-reading" class="primary-btn">Record new reading →</button></div>
+      <div class="monitor-controls">
+        <label for="monitor-plot">Plot <select id="monitor-plot"><option>Plot A</option><option>Plot B</option><option>Plot C</option></select></label>
+        <div class="mode-switch" aria-label="History source"><button type="button" class="mode-btn active" data-mode="sample" aria-pressed="true">Sample history</button><button type="button" class="mode-btn" data-mode="recorded" aria-pressed="false">My recorded history</button></div>
+      </div>
+      <div class="monitor-summary">
+        <div class="panel monitor-stat"><span>CURRENT PLOT INPUT</span><strong id="monitor-moisture">—</strong><small>soil moisture entered for this plot</small></div>
+        <div class="panel monitor-stat"><span>WEATHER SOURCE</span><strong id="monitor-weather">Manual / sample</strong><small id="monitor-weather-time">Fetch current weather to update</small></div>
+        <div class="panel monitor-stat"><span>CURRENT RECOMMENDATION</span><strong id="monitor-urgency">—</strong><small id="monitor-recommendation-time">From current plot inputs</small></div>
+      </div>
+      <div class="monitor-grid">
+        <div class="panel chart-panel">
+          <div class="panel-heading"><div><div class="section-label">SOIL MOISTURE · %</div><h2 id="history-title">Illustrative history</h2></div><span class="chart-key"><i></i><span id="history-key">Classroom examples</span></span></div>
+          <p id="history-caption" class="muted"></p>
+          <div class="chart-scroll"><svg id="moisture-chart" viewBox="0 0 700 270" role="img" aria-label="Soil moisture history chart"></svg></div>
+          <div id="history-events" class="history-events"></div>
+          <p id="history-storage" class="storage-note" role="status"></p>
+        </div>
+        <div class="panel chart-panel rain-panel">
+          <div class="section-label">NEXT 24 HOURS · MM</div><h2>Forecast rain</h2>
+          <p id="rain-caption" class="muted">Fetch current weather on the Recommendation tab to show the hourly forecast here.</p>
+          <div id="rain-chart-container" class="chart-scroll" hidden><svg id="rain-chart" viewBox="0 0 560 210" role="img" aria-label="Next 24 hours of forecast rain chart"></svg></div>
+          <p class="chart-disclaimer">Town-level modelled forecast. Soil moisture is entered manually; there is no automatic sensor feed.</p>
+        </div>
       </div>
     </section>
   </main>

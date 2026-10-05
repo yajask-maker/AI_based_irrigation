@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const { MODEL, SAMPLE_PLOTS, predict, treeLayout, parseWeatherForecast, fetchWeatherForCity } = require("./app.js");
+const { MODEL, SAMPLE_PLOTS, predict, treeLayout, parseWeatherForecast, fetchWeatherForCity, sampleHistory, loadHistory, makeHistoryEntry, HISTORY_KEY } = require("./app.js");
 
 const day = new Date(2026, 9, 5);
 
@@ -73,7 +73,19 @@ test("weather forecast uses the next 24 hours and leaves soil moisture for manua
   assert.equal(weather.et0, 4.8);
   assert.equal(weather.location, "Kolhapur, Maharashtra");
   assert.equal(weather.moisture, undefined);
+  assert.equal(weather.hourlyRain.length, 24);
+  assert.equal(weather.hourlyRain[23], 12);
   assert.throws(() => parseWeatherForecast({ name: "Kolhapur" }, { current: { temperature_2m: 28 } }), /incomplete/);
+});
+
+test("sample history is labelled separately and saved readings survive a reload", () => {
+  const samples = sampleHistory("Plot A", day);
+  assert.equal(samples.length, 4);
+  assert.ok(samples.every(item => item.source === "Sample"));
+  const recorded = makeHistoryEntry(predict(SAMPLE_PLOTS["Plot A"], day), day, "Entered values");
+  const storage = { getItem: key => key === HISTORY_KEY ? JSON.stringify([recorded, { ...recorded, urgency: "Wait" }]) : null };
+  assert.deepEqual(loadHistory(storage), [recorded]);
+  assert.equal(loadHistory({ getItem: () => "broken" }).length, 0);
 });
 
 test("live weather lookup requests the chosen town and forecast without an API key", async () => {
